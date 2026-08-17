@@ -1,5 +1,7 @@
 # WSID Finance Bot
 
+*WSID — "What Should I Do?" 급락/급등 트리거가 뜰 때마다 스스로에게 묻던 질문에서 이름을 땄습니다.*
+
 **국내주식 보유 종목을 등록하면, 장 전/중/후로 시장을 모니터링하고 Telegram으로 알려주는 개인용 봇.**
 Claude API 대신 로컬에 로그인된 `claude -p` (Claude Code CLI, 구독 기반)를 그대로 호출해 분석 비용 없이 동작합니다.
 
