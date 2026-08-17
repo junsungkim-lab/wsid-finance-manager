@@ -1,11 +1,13 @@
-# FinanceBot
+# WSID Finance Bot
 
 **국내주식 보유 종목을 등록하면, 장 전/중/후로 시장을 모니터링하고 Telegram으로 알려주는 개인용 봇.**
 Claude API 대신 로컬에 로그인된 `claude -p` (Claude Code CLI, 구독 기반)를 그대로 호출해 분석 비용 없이 동작합니다.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/junsungkim-lab/wsid-finance-manager/main/docs/assets/dashboard.jpg" width="720" alt="FinanceBot 대시보드">
-</p>
+<div align="center">
+
+![WSID Finance Bot 대시보드](docs/assets/dashboard.jpg)
+
+</div>
 
 > 스크린샷은 데모 데이터입니다. 실제 화면에는 본인이 등록한 종목만 표시됩니다.
 
@@ -31,9 +33,11 @@ Claude API 대신 로컬에 로그인된 `claude -p` (Claude Code CLI, 구독 �
 | 🔐 **선택적 로그인** | 비밀번호 없이 Telegram 인증코드로 admin 화면 보호 (기본은 꺼짐) |
 | 📱 **반응형 admin** | 데스크톱/모바일 어디서나 같은 화면으로 확인 |
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/junsungkim-lab/wsid-finance-manager/main/docs/assets/holdings.jpg" width="720" alt="종목 관리 화면">
-</p>
+<div align="center">
+
+![종목 관리 화면](docs/assets/holdings.jpg)
+
+</div>
 
 ## 하루 흐름 (KST, 거래일만)
 
