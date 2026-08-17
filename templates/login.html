@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-brand"><span class="dot"></span>FinanceBot</div>
+    <h1>로그인</h1>
+    <p class="hint" style="margin-top:-8px; margin-bottom:18px;">Telegram으로 받은 인증코드를 입력하세요.</p>
+
+    {% if error %}
+    <div class="banner fail" role="status" aria-live="polite">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+      코드가 올바르지 않거나 만료됐습니다.
+    </div>
+    {% elif requested %}
+    <div class="banner ok" role="status" aria-live="polite">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.8 10A10 10 0 1 1 17 3.34"/><path d="m9 11 3 3L22 4"/></svg>
+      Telegram으로 코드를 보냈습니다. (5분간 유효)
+    </div>
+    {% endif %}
+
+    <form method="post" action="/login/verify" class="field" style="gap:12px;">
+      <input type="hidden" name="next" value="{{ next }}">
+      <input name="code" placeholder="6자리 코드" inputmode="numeric" autocomplete="one-time-code"
+        maxlength="6" pattern="\d{6}" autofocus required
+        style="font-size:20px; letter-spacing:.3em; text-align:center;">
+      <button type="submit">로그인</button>
+    </form>
+
+    <form method="post" action="/login/request" style="margin-top:10px;">
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="secondary" style="width:100%;">코드 다시 받기</button>
+    </form>
+
+    <p class="hint">
+      Telegram 미설정 시 코드는 서버 콘솔(tmux)에 출력됩니다.
+    </p>
+  </div>
+</div>
+
+<style>
+  .login-wrap { min-height: calc(100vh - 40px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-card { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: 28px 26px; }
+  .login-brand { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px;
+    color: var(--text-muted); margin-bottom: 18px; }
+  .login-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+  .login-card h1 { margin: 0 0 4px; }
+  .login-card .field { display: flex; flex-direction: column; }
+  .login-card .hint { text-align: center; }
+</style>
+{% endblock %}

@@ -1,0 +1,12 @@
+.env
+venv/
+__pycache__/
+*.pyc
+financebot.db
+financebot.db-*
+financebot.db.bak*
+*.db
+*.db.bak*
+data/
+.DS_Store
+*.log

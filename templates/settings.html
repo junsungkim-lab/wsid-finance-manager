@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>설정</h1>
+
+{% if request.query_params.get('test') == 'ok' %}
+<div class="banner ok" role="status" aria-live="polite">
+  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.8 10A10 10 0 1 1 17 3.34"/><path d="m9 11 3 3L22 4"/></svg>
+  테스트 메시지를 전송했습니다.
+</div>
+{% elif request.query_params.get('test') %}
+<div class="banner fail" role="status" aria-live="polite">
+  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+  전송 실패 — 토큰/챗ID를 확인하세요.
+</div>
+{% endif %}
+{% if request.query_params.get('error') == 'no_telegram' %}
+<div class="banner fail" role="status" aria-live="polite">
+  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+  로그인을 켜려면 먼저 Telegram(.env 또는 프로필 챗ID)이 설정돼 있어야 합니다. 아래에서 테스트 발송으로 먼저 확인하세요.
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>트리거 &amp; 스케줄</h2>
+  <form method="post" action="/settings/save" class="field-grid">
+    <div class="field">
+      <label for="s_change">당일 등락률 트리거 (%)</label>
+      <input id="s_change" name="change_pct_threshold" type="number" step="0.1" inputmode="decimal" autocomplete="off" value="{{ settings.change_pct_threshold }}">
+    </div>
+    <div class="field">
+      <label for="s_spike">5분 급변 트리거 (%)</label>
+      <input id="s_spike" name="spike_5m_threshold" type="number" step="0.1" inputmode="decimal" autocomplete="off" value="{{ settings.spike_5m_threshold }}">
+    </div>
+    <div class="field">
+      <label for="s_loss">손실 임계선 (쉼표 구분, %)</label>
+      <input id="s_loss" name="loss_levels" autocomplete="off" value="{{ settings.loss_levels }}">
+    </div>
+    <div class="field">
+      <label for="s_cooldown">종목별 알림 쿨다운 (분)</label>
+      <input id="s_cooldown" name="cooldown_min" type="number" min="0" inputmode="numeric" autocomplete="off" value="{{ settings.cooldown_min }}">
+    </div>
+    <div class="field">
+      <label for="s_useclaude">장중 claude 분석 사용 (1/0)</label>
+      <input id="s_useclaude" name="use_claude_intraday" inputmode="numeric" autocomplete="off" value="{{ settings.use_claude_intraday }}">
+    </div>
+    <div class="field">
+      <label for="s_pre">프리마켓 시각 (HH:MM)</label>
+      <input id="s_pre" name="premarket_time" placeholder="08:00" autocomplete="off" value="{{ settings.premarket_time }}">
+    </div>
+    <div class="field">
+      <label for="s_post">마감 브리핑 시각 (HH:MM)</label>
+      <input id="s_post" name="postmarket_time" placeholder="16:00" autocomplete="off" value="{{ settings.postmarket_time }}">
+    </div>
+    <div class="field">
+      <span class="field-label">관리 화면 로그인 요구</span>
+      <div class="segmented" role="radiogroup" aria-label="관리 화면 로그인 요구">
+        <label class="segmented-opt">
+          <input type="radio" name="require_login" value="0" {{ "checked" if settings.require_login != "1" else "" }}>
+          <span>사용 안 함</span>
+        </label>
+        <label class="segmented-opt">
+          <input type="radio" name="require_login" value="1" {{ "checked" if settings.require_login == "1" else "" }}>
+          <span>사용 (Telegram 인증)</span>
+        </label>
+      </div>
+    </div>
+    <div class="field-actions"><button type="submit">설정 저장</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Telegram</h2>
+  <form method="post" action="/telegram/test"><button type="submit" class="secondary">테스트 메시지 발송</button></form>
+  <p class="hint">토큰/챗ID는 .env 파일에서 설정 (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID).
+    로그인 코드도 이 챗ID로 전송됩니다 (미설정 시 첫 번째 활성 프로필의 챗ID 사용, 그마저 없으면 서버 콘솔에 출력).</p>
+</div>
+
+<style>
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-actions { grid-column: 1 / -1; margin-top: 4px; }
+  .field-label { font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
+
+  .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    overflow: hidden; width: fit-content; max-width: 100%; }
+  .segmented-opt { position: relative; padding: 8px 14px; font-size: 13.5px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; white-space: nowrap; transition: background-color .15s, color .15s; }
+  .segmented-opt:not(:last-child) { border-right: 1px solid var(--border); }
+  .segmented-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .segmented-opt:hover { background: var(--surface-2); }
+  .segmented-opt:has(input:checked) { background: var(--ink); color: #fff; }
+  .segmented-opt:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: -2px; }
+</style>
+{% endblock %}

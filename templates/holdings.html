@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>종목 관리</h1>
+
+<div class="tabs">
+  <a href="/holdings?profile=0" class="{{ 'active' if current_profile == 0 else '' }}">전체</a>
+  {% for p in profiles %}
+  <a href="/holdings?profile={{ p.id }}" class="{{ 'active' if current_profile == p.id else '' }}">{{ p.name }}</a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h2>종목 추가 / 수정</h2>
+  <form method="post" action="/holdings/save" id="saveForm" autocomplete="off">
+    <div class="field" style="max-width:280px; margin-bottom:16px; position:relative;">
+      <label id="profileLabel">프로필</label>
+      <button type="button" id="profileTrigger" class="dropdown-trigger"
+        aria-haspopup="listbox" aria-expanded="false" aria-labelledby="profileLabel">
+        <span id="profileTriggerText">{% for p in profiles %}{% if p.id == default_profile %}{{ p.name }}{% endif %}{% endfor %}</span>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div id="profileMenu" class="dropdown-menu" role="listbox" aria-labelledby="profileLabel">
+        {% for p in profiles %}
+        <div class="dropdown-item" role="option" aria-selected="{{ 'true' if p.id == default_profile else 'false' }}"
+          data-id="{{ p.id }}">{{ p.name }}</div>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="profile_id" id="f_profile" value="{{ default_profile }}">
+    </div>
+
+    <div class="field" style="position:relative; max-width:400px;">
+      <label for="searchBox">종목 검색</label>
+      <input id="searchBox" placeholder="종목명 또는 코드 검색… (예: 삼성전자)" autocomplete="off"
+        role="combobox" aria-expanded="false" aria-controls="results" aria-autocomplete="list">
+      <div id="results" role="listbox"></div>
+    </div>
+
+    <div id="picked" class="picked-box">
+      <b id="pickedName"></b> <span id="pickedMeta" class="picked-meta"></span>
+      <a href="#" id="clearPick">변경</a>
+    </div>
+
+    <!-- 실제 전송 값 -->
+    <input type="hidden" name="code" id="f_code">
+    <input type="hidden" name="name" id="f_name">
+    <input type="hidden" name="holding_id" id="f_id" value="0">
+
+    <div id="detailFields" class="field-grid" style="display:none; margin-top:16px;">
+      <div class="field">
+        <label for="f_qty">수량(주)</label>
+        <input name="qty" id="f_qty" type="number" inputmode="numeric" min="0" placeholder="수량" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="f_avg">평단가(원)</label>
+        <input name="avg_price" id="f_avg" type="number" inputmode="decimal" step="0.01" min="0" placeholder="평단가" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="f_sector">섹터</label>
+        <input name="sector" id="f_sector" placeholder="반도체·자동차 등 (비우면 자동 판단)" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f_memo">메모</label>
+        <input name="memo" id="f_memo" placeholder="(선택)" autocomplete="off">
+      </div>
+      <input type="hidden" name="active" value="1">
+      <div class="field-actions"><button type="submit">저장</button></div>
+    </div>
+  </form>
+  <p class="hint">프로필을 고른 뒤 종목을 검색해 클릭하고 수량·평단가를 입력하세요. 같은 프로필에 이미 등록된 종목을 다시 저장하면 수정됩니다.</p>
+</div>
+
+<div class="card">
+  <h2>보유 종목 <span class="muted-count">{{ holdings|length }}</span></h2>
+  <table>
+    <thead><tr><th>프로필</th><th>종목</th><th>수량</th><th>평단</th><th>섹터</th><th>메모</th><th>활성</th><th></th></tr></thead>
+    <tbody>
+    {% for h in holdings %}
+    <tr>
+      <td data-label="프로필">{% for p in profiles %}{% if p.id == h.profile_id %}{{ p.name }}{% endif %}{% endfor %}</td>
+      <td data-label="종목">{{ h.name }} ({{ h.code }})</td>
+      <td data-label="수량">{{ "{:,}".format(h.qty) }}</td>
+      <td data-label="평단">{{ "{:,.0f}".format(h.avg_price) }}</td>
+      <td data-label="섹터">{{ h.sector }}</td>
+      <td data-label="메모">{{ h.memo }}</td>
+      <td data-label="활성"><span class="badge {{ 'on' if h.active else 'off' }}">{{ "활성" if h.active else "중지" }}</span></td>
+      <td>
+        <div class="row-actions">
+        <button type="button" class="editBtn secondary" aria-label="{{ h.name }} 수정"
+          data-id="{{ h.id }}" data-code="{{ h.code }}" data-name="{{ h.name }}" data-market="{{ h.sector }}"
+          data-qty="{{ h.qty }}" data-avg="{{ h.avg_price }}" data-memo="{{ h.memo }}"
+          data-profile="{{ h.profile_id }}">수정</button>
+        <form method="post" action="/holdings/save">
+          <input type="hidden" name="holding_id" value="{{ h.id }}">
+          <input type="hidden" name="code" value="{{ h.code }}">
+          <input type="hidden" name="name" value="{{ h.name }}">
+          <input type="hidden" name="qty" value="{{ h.qty }}">
+          <input type="hidden" name="avg_price" value="{{ h.avg_price }}">
+          <input type="hidden" name="sector" value="{{ h.sector }}">
+          <input type="hidden" name="memo" value="{{ h.memo }}">
+          <input type="hidden" name="active" value="{{ 0 if h.active else 1 }}">
+          <input type="hidden" name="profile_id" value="{{ h.profile_id }}">
+          <button type="submit" class="secondary" aria-label="{{ h.name }} {{ '중지' if h.active else '재개' }}">{{ "중지" if h.active else "재개" }}</button>
+        </form>
+        <form method="post" action="/holdings/delete"
+              onsubmit="return confirm('{{ h.name }} 삭제?')">
+          <input type="hidden" name="holding_id" value="{{ h.id }}">
+          <input type="hidden" name="profile_id" value="{{ h.profile_id }}">
+          <button type="submit" class="danger" aria-label="{{ h.name }} 삭제">삭제</button>
+        </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8">등록된 종목이 없습니다.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; align-items: end; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-actions { display: flex; align-items: end; }
+  .picked-box { display: none; margin-top: 14px; padding: 12px 14px; background: var(--primary-tint);
+    border-radius: var(--radius-md); font-size: 14px; }
+  .picked-meta { color: var(--text-muted); font-size: 13px; margin-left: 4px; }
+  #picked a { margin-left: 10px; font-size: 13px; font-weight: 600; }
+  #results { position:absolute; left:0; right:0; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-md); margin-top:4px; box-shadow:0 8px 24px rgba(16,24,40,.12); z-index:10; display:none;
+    max-height: 280px; overflow-y: auto; }
+  .resItem { padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--surface-2); font-size:14px; }
+  .resItem:last-child { border-bottom: 0; }
+  .resItem:hover, .resItem.active { background: var(--primary-tint); }
+  .resItem .tag { color: var(--text-faint); font-size:12px; margin-left:6px; }
+
+  /* 커스텀 드롭다운 — 네이티브 <select>는 모바일 브라우저(특히 인앱 웹뷰)에서 위치·색상이
+     깨지는 경우가 많아, 검색결과 목록과 같은 방식(순수 CSS 절대배치)으로 직접 그린다. */
+  .dropdown-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text); font-size: 14px; font-weight: 500;
+    font-family: inherit; cursor: pointer; text-align: left; }
+  .dropdown-trigger:hover { border-color: #c7cad1; }
+  .dropdown-trigger .icon { color: var(--text-faint); }
+  .dropdown-menu { position: absolute; left: 0; right: 0; top: 100%; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius-md); margin-top: 4px;
+    box-shadow: 0 8px 24px rgba(16,24,40,.12); z-index: 10; display: none; max-height: 240px; overflow-y: auto; }
+  .dropdown-menu.open { display: block; }
+  .dropdown-item { padding: 10px 12px; cursor: pointer; font-size: 14px; color: var(--text); }
+  .dropdown-item:hover, .dropdown-item.active { background: var(--primary-tint); }
+  .dropdown-item[aria-selected="true"] { font-weight: 700; }
+</style>
+
+<script>
+// ---------- 프로필 커스텀 드롭다운 ----------
+const profileTrigger = document.getElementById('profileTrigger');
+const profileMenu = document.getElementById('profileMenu');
+const profileTriggerText = document.getElementById('profileTriggerText');
+const profileHidden = document.getElementById('f_profile');
+
+function setProfile(id) {
+  const item = profileMenu.querySelector(`.dropdown-item[data-id="${id}"]`);
+  if (!item) return;
+  profileHidden.value = id;
+  profileTriggerText.textContent = item.textContent.trim();
+  profileMenu.querySelectorAll('.dropdown-item').forEach(el =>
+    el.setAttribute('aria-selected', el === item ? 'true' : 'false'));
+}
+
+function closeProfileMenu() {
+  profileMenu.classList.remove('open');
+  profileTrigger.setAttribute('aria-expanded', 'false');
+}
+
+profileTrigger.addEventListener('click', () => {
+  const open = profileMenu.classList.toggle('open');
+  profileTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+profileMenu.querySelectorAll('.dropdown-item').forEach(el => {
+  el.addEventListener('click', () => { setProfile(el.dataset.id); closeProfileMenu(); });
+});
+document.addEventListener('click', e => {
+  if (!profileTrigger.contains(e.target) && !profileMenu.contains(e.target)) closeProfileMenu();
+});
+profileTrigger.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeProfileMenu();
+});
+
+const searchBox = document.getElementById('searchBox');
+const results = document.getElementById('results');
+const picked = document.getElementById('picked');
+const detailFields = document.getElementById('detailFields');
+let items = [], active = -1, timer = null;
+
+function pick(it) {
+  document.getElementById('f_code').value = it.code;
+  document.getElementById('f_name').value = it.name;
+  document.getElementById('f_id').value = it.id || 0;
+  if (it.profile) setProfile(it.profile);
+  document.getElementById('pickedName').textContent = it.name + ' (' + it.code + ')';
+  document.getElementById('pickedMeta').textContent = it.market || '';
+  picked.style.display = 'block';
+  detailFields.style.display = 'grid';
+  results.style.display = 'none';
+  searchBox.style.display = 'none';
+  document.getElementById('f_qty').focus();
+}
+
+function render() {
+  if (!items.length) { results.style.display = 'none'; searchBox.setAttribute('aria-expanded', 'false'); return; }
+  results.innerHTML = items.map((it, i) =>
+    `<div class="resItem ${i===active?'active':''}" role="option" data-i="${i}">${it.name}
+       <span class="tag">${it.code} · ${it.market||''}</span></div>`).join('');
+  results.style.display = 'block';
+  searchBox.setAttribute('aria-expanded', 'true');
+  results.querySelectorAll('.resItem').forEach(el =>
+    el.addEventListener('mousedown', e => { e.preventDefault(); pick(items[+el.dataset.i]); }));
+}
+
+searchBox.addEventListener('input', () => {
+  clearTimeout(timer);
+  const q = searchBox.value.trim();
+  if (q.length < 1) { results.style.display='none'; return; }
+  timer = setTimeout(async () => {
+    const r = await fetch('/api/search?q=' + encodeURIComponent(q));
+    items = await r.json(); active = -1; render();
+  }, 200);
+});
+
+searchBox.addEventListener('keydown', e => {
+  if (results.style.display === 'none') return;
+  if (e.key === 'ArrowDown') { active = Math.min(active+1, items.length-1); render(); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { active = Math.max(active-1, 0); render(); e.preventDefault(); }
+  else if (e.key === 'Enter' && active >= 0) { pick(items[active]); e.preventDefault(); }
+});
+
+document.getElementById('clearPick').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('f_id').value = 0;
+  picked.style.display = 'none';
+  detailFields.style.display = 'none';
+  searchBox.style.display = 'block';
+  searchBox.value = ''; searchBox.focus();
+});
+
+// 목록의 "수정" 버튼 → 검색 단계 건너뛰고 바로 상세 입력
+document.querySelectorAll('.editBtn').forEach(btn => btn.addEventListener('click', () => {
+  pick({id: btn.dataset.id, code: btn.dataset.code, name: btn.dataset.name, market: '', profile: btn.dataset.profile});
+  document.getElementById('f_qty').value = btn.dataset.qty;
+  document.getElementById('f_avg').value = btn.dataset.avg;
+  document.getElementById('f_sector').value = btn.dataset.market;  // data-market 칸에 기존 섹터 저장됨
+  document.getElementById('f_memo').value = btn.dataset.memo;
+  window.scrollTo({top:0, behavior:'smooth'});
+}));
+</script>
+{% endblock %}

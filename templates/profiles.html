@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>프로필 관리</h1>
+
+{% if request.query_params.get('test') == 'ok' %}
+<div class="banner ok" role="status" aria-live="polite">
+  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.8 10A10 10 0 1 1 17 3.34"/><path d="m9 11 3 3L22 4"/></svg>
+  테스트 메시지를 전송했습니다.
+</div>
+{% elif request.query_params.get('test') %}
+<div class="banner fail" role="status" aria-live="polite">
+  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+  전송 실패 — 챗ID를 확인하세요.
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>프로필 추가 / 수정</h2>
+  <form method="post" action="/profiles/save" id="profileForm" class="field-grid">
+    <input type="hidden" name="profile_id" id="p_id" value="0">
+    <div class="field">
+      <label for="p_name">이름</label>
+      <input name="name" id="p_name" placeholder="예: 본인 계좌" autocomplete="off" required>
+    </div>
+    <div class="field">
+      <label for="p_chat">Telegram Chat ID</label>
+      <input name="telegram_chat_id" id="p_chat" placeholder="이 프로필 알림을 받을 chat_id"
+        inputmode="numeric" autocomplete="off">
+    </div>
+    <input type="hidden" name="active" value="1">
+    <div class="field-actions" style="gap:12px;">
+      <button type="submit">저장</button>
+      <a href="#" id="p_cancel" style="display:none; font-size:13px; font-weight:600;">새 프로필로</a>
+    </div>
+  </form>
+  <p class="hint">
+    chat_id는 봇에게 말을 건 뒤 <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>에서 확인.
+    비워두면 .env의 기본 TELEGRAM_CHAT_ID로 발송됩니다.
+  </p>
+</div>
+
+<div class="card">
+  <h2>프로필 목록 <span class="muted-count">{{ profiles|length }}</span></h2>
+  <table>
+    <thead><tr><th>이름</th><th>Chat ID</th><th>활성</th><th></th></tr></thead>
+    <tbody>
+    {% for p in profiles %}
+    <tr>
+      <td data-label="이름">{{ p.name }}</td>
+      <td data-label="Chat ID">{{ p.telegram_chat_id or "(기본값 사용)" }}</td>
+      <td data-label="활성"><span class="badge {{ 'on' if p.active else 'off' }}">{{ "활성" if p.active else "중지" }}</span></td>
+      <td>
+        <div class="row-actions">
+        <button type="button" class="editBtn secondary"
+          data-id="{{ p.id }}" data-name="{{ p.name }}" data-chat="{{ p.telegram_chat_id }}">수정</button>
+        <form method="post" action="/profiles/telegram_test">
+          <input type="hidden" name="profile_id" value="{{ p.id }}">
+          <button type="submit" class="secondary">테스트 발송</button>
+        </form>
+        <form method="post" action="/profiles/save">
+          <input type="hidden" name="profile_id" value="{{ p.id }}">
+          <input type="hidden" name="name" value="{{ p.name }}">
+          <input type="hidden" name="telegram_chat_id" value="{{ p.telegram_chat_id }}">
+          <input type="hidden" name="active" value="{{ 0 if p.active else 1 }}">
+          <button type="submit" class="secondary">{{ "중지" if p.active else "재개" }}</button>
+        </form>
+        <form method="post" action="/profiles/delete"
+              onsubmit="return confirm('{{ p.name }} 프로필과 소속 보유 종목을 모두 삭제할까요?')">
+          <input type="hidden" name="profile_id" value="{{ p.id }}">
+          <button type="submit" class="danger">삭제</button>
+        </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">등록된 프로필이 없습니다.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: end; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-actions { display: flex; align-items: center; }
+</style>
+
+<script>
+document.querySelectorAll('.editBtn').forEach(btn => btn.addEventListener('click', () => {
+  document.getElementById('p_id').value = btn.dataset.id;
+  document.getElementById('p_name').value = btn.dataset.name;
+  document.getElementById('p_chat').value = btn.dataset.chat;
+  document.getElementById('p_cancel').style.display = 'inline';
+  window.scrollTo({top:0, behavior:'smooth'});
+}));
+document.getElementById('p_cancel').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('p_id').value = 0;
+  document.getElementById('p_name').value = '';
+  document.getElementById('p_chat').value = '';
+  e.target.style.display = 'none';
+});
+</script>
+{% endblock %}
