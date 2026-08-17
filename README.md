@@ -16,6 +16,7 @@ Claude API 대신 로컬에 로그인된 `claude -p` (Claude Code CLI, 구독 �
 ## 목차
 
 - [이런 걸 해줍니다](#이런-걸-해줍니다)
+- [데모](#데모)
 - [하루 흐름](#하루-흐름-kst-거래일만)
 - [빠른 시작](#빠른-시작)
 - [Admin 페이지](#admin-페이지-httplocalhost8010)
@@ -38,6 +39,13 @@ Claude API 대신 로컬에 로그인된 `claude -p` (Claude Code CLI, 구독 �
 ![종목 관리 화면](docs/assets/holdings.jpg)
 
 </div>
+
+## 데모
+
+| 📱 모바일 반응형 | 💬 Telegram 알림 |
+|:---:|:---:|
+| ![모바일 데모](docs/assets/mobile-demo.gif) | ![Telegram 알림 데모](docs/assets/telegram-demo.gif) |
+| 대시보드부터 설정까지 휴대폰에서 그대로 확인 | 트리거 발생 시 claude가 수급/공시를 분석해 판단까지 짚어줌 |
 
 ## 하루 흐름 (KST, 거래일만)
 
